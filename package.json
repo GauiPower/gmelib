@@ -1,6 +1,6 @@
 {
   "name": "gmelib",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A nodejs library that help you change audio files in .gme files, without destroying the games.",
   "main": "lib.js",
   "scripts": {},

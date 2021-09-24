@@ -8,7 +8,6 @@ class GmeFile {
      */
     constructor(filename) {
         this.gmeFileBuffer = fs.readFileSync(filename)
-        this.xor = 0x8D
         this.playScriptTableOffset = this.gmeFileBuffer.readUInt32LE(0x00)
         this.mediaTableOffset = this.gmeFileBuffer.readUInt32LE(0x04)
         this.gameTableOffset = this.gmeFileBuffer.readUInt32LE(0x10)
@@ -16,7 +15,7 @@ class GmeFile {
         this.rawXor = this.gmeFileBuffer.readUInt32LE(0x1C)
         this.copyMediaTableOffset = this.gmeFileBuffer.readUInt32LE(0x60)
         this.mediaTableSize = this.copyMediaTableOffset - this.mediaTableOffset
-        
+
         this.mediaSegments = [] // parse media table to json
         for (let i = 0; this.mediaTableSize > i; i = i + 8) {
             let json = {}
@@ -24,6 +23,15 @@ class GmeFile {
             json.size = this.gmeFileBuffer.readUInt32LE(this.mediaTableOffset + i + 4)
             json.number = this.mediaSegments.length
             this.mediaSegments.push(json)
+
+        }
+
+        if (this.gmeFileBuffer[this.mediaSegments[0].offset + 1] === this.gmeFileBuffer[this.mediaSegments[0].offset + 2]) {
+            this.xor = "O".charCodeAt() ^ this.gmeFileBuffer[this.mediaSegments[0].offset]
+        } else if (this.gmeFileBuffer[this.mediaSegments[0].offset + 2] === this.gmeFileBuffer[this.mediaSegments[0].offset + 3]) {
+            this.xor = "R".charCodeAt() ^ this.gmeFileBuffer[this.mediaSegments[0].offset]
+        } else {
+            console.error("Cant get xor value")
         }
     }
 
