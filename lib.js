@@ -14,7 +14,12 @@ class GmeFile {
         this.productId = this.gmeFileBuffer.readUInt32LE(0x14)
         this.rawXor = this.gmeFileBuffer.readUInt32LE(0x1C)
         this.copyMediaTableOffset = this.gmeFileBuffer.readUInt32LE(0x60)
-        this.mediaTableSize = this.copyMediaTableOffset - this.mediaTableOffset
+        
+        if (this.copyMediaTableOffset === 0) {
+            this.mediaTableSize = this.gmeFileBuffer.readUInt32LE(this.mediaTableOffset) - this.mediaTableOffset
+        } else {
+            this.mediaTableSize = this.copyMediaTableOffset - this.mediaTableOffset
+        }
 
         this.mediaSegments = [] // parse media table to json
         for (let i = 0; this.mediaTableSize > i; i = i + 8) {
