@@ -1,20 +1,25 @@
-const fs = require("fs")
-
 class GmeFile {
 
     /**
      * 
-     * @param {String} filename 
+     * @param {Buffer} inputBuffer 
      */
-    constructor(filename) {
-        this.gmeFileBuffer = fs.readFileSync(filename)
+    constructor(inputBuffer) {
+        this.gmeFileBuffer = inputBuffer
         this.playScriptTableOffset = this.gmeFileBuffer.readUInt32LE(0x00)
         this.mediaTableOffset = this.gmeFileBuffer.readUInt32LE(0x04)
         this.gameTableOffset = this.gmeFileBuffer.readUInt32LE(0x10)
         this.productId = this.gmeFileBuffer.readUInt32LE(0x14)
         this.rawXor = this.gmeFileBuffer.readUInt32LE(0x1C)
         this.copyMediaTableOffset = this.gmeFileBuffer.readUInt32LE(0x60)
-        
+
+        this.game1binariesTable = this.gmeFileBuffer.readUInt32LE(0x90)
+        this.game2NbinariesTable = this.gmeFileBuffer.readUInt32LE(0x98)
+        this.main1binaryTable = this.gmeFileBuffer.readUInt32LE(0xA0)
+        this.main2NbinaryTable = this.gmeFileBuffer.readUInt32LE(0xA8)
+        this.main3LbinaryTable = this.gmeFileBuffer.readUInt32LE(0xC8)
+        this.game3LbinariesTable = this.gmeFileBuffer.readUInt32LE(0xCC)
+
         if (this.copyMediaTableOffset === 0) {
             this.mediaTableSize = this.gmeFileBuffer.readUInt32LE(this.mediaTableOffset) - this.mediaTableOffset
         } else {
@@ -28,7 +33,6 @@ class GmeFile {
             json.size = this.gmeFileBuffer.readUInt32LE(this.mediaTableOffset + i + 4)
             json.number = this.mediaSegments.length
             this.mediaSegments.push(json)
-
         }
 
         if (this.gmeFileBuffer[this.mediaSegments[0].offset + 1] === this.gmeFileBuffer[this.mediaSegments[0].offset + 2]) {
@@ -76,7 +80,6 @@ class GmeFile {
         }
 
         encContent.copy(this.gmeFileBuffer, offset, 0, offset + size)
-
     }
 
     /**
@@ -108,14 +111,6 @@ class GmeFile {
         return this.crypt(encContent)
     }
 
-    /**
-     * 
-     * @param {String} filename 
-     */
-    saveFile(filename) {
-        fs.writeFileSync(filename, this.gmeFileBuffer)
-    }
-
     writeMediaTable() { // after using this, tttool can not longer read this file
         if (this.mediaTableSize !== this.mediaSegments.length * 8) { console.warn("media table has diffrent size") }
 
@@ -136,7 +131,7 @@ class GmeFile {
      * @param {Number} id 
      */
     changeSmartMedia(content, id) {
-        if (this.mediaSegments[id].size <= content.length) {
+        if (this.mediaSegments[id].size >= content.length) {
             this.raplaceMediaFile(content, id)
         } else {
             this.addMediafile(content, id)
