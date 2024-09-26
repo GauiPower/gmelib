@@ -30,7 +30,7 @@ class GmeFile {
         this.main3LbinaryTable = this.parseBinaryTable(this.main3LbinaryTableOffset)
 
         this.game3LbinariesTableOffset = this.gmeFileBuffer.readUInt32LE(0xCC)
-        this.game1binariesTable = this.parseBinaryTable(this.game3LbinariesTableOffset)
+        this.game3LbinariesTable = this.parseBinaryTable(this.game3LbinariesTableOffset)
 
 
         if (this.copyMediaTableOffset === 0) {
