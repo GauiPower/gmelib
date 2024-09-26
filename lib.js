@@ -13,12 +13,25 @@ class GmeFile {
         this.rawXor = this.gmeFileBuffer.readUInt32LE(0x1C)
         this.copyMediaTableOffset = this.gmeFileBuffer.readUInt32LE(0x60)
 
-        this.game1binariesTable = this.gmeFileBuffer.readUInt32LE(0x90)
-        this.game2NbinariesTable = this.gmeFileBuffer.readUInt32LE(0x98)
-        this.main1binaryTable = this.gmeFileBuffer.readUInt32LE(0xA0)
-        this.main2NbinaryTable = this.gmeFileBuffer.readUInt32LE(0xA8)
-        this.main3LbinaryTable = this.gmeFileBuffer.readUInt32LE(0xC8)
-        this.game3LbinariesTable = this.gmeFileBuffer.readUInt32LE(0xCC)
+
+        this.game1binariesTableOffset = this.gmeFileBuffer.readUInt32LE(0x90)
+        this.game1binariesTable = this.parseBinaryTable(this.game1binariesTableOffset)
+
+        this.game2NbinariesTableOffset = this.gmeFileBuffer.readUInt32LE(0x98)
+        this.game2NbinariesTable = this.parseBinaryTable(this.game2NbinariesTableOffset)
+
+        this.main1binaryTableOffset = this.gmeFileBuffer.readUInt32LE(0xA0)
+        this.main1binaryTable = this.parseBinaryTable(this.main1binaryTableOffset)
+
+        this.main2NbinaryTableOffset = this.gmeFileBuffer.readUInt32LE(0xA8)
+        this.main2NbinaryTable = this.parseBinaryTable(this.main2NbinaryTableOffset)
+
+        this.main3LbinaryTableOffset = this.gmeFileBuffer.readUInt32LE(0xC8)
+        this.main3LbinaryTable = this.parseBinaryTable(this.main3LbinaryTableOffset)
+
+        this.game3LbinariesTableOffset = this.gmeFileBuffer.readUInt32LE(0xCC)
+        this.game1binariesTable = this.parseBinaryTable(this.game3LbinariesTableOffset)
+
 
         if (this.copyMediaTableOffset === 0) {
             this.mediaTableSize = this.gmeFileBuffer.readUInt32LE(this.mediaTableOffset) - this.mediaTableOffset
@@ -42,6 +55,25 @@ class GmeFile {
         } else {
             console.error("Cant get xor value")
         }
+    }
+
+    /**
+     * 
+     * @param {Number} binaryTableOffset 
+     * @returns {Array}
+     */
+    parseBinaryTable(binaryTableOffset) {
+        const array = []
+        const bin_count = this.gmeFileBuffer.readUInt32LE(binaryTableOffset)
+        for (let i = 0; bin_count > i; i++) {
+            const segmentOffset = binaryTableOffset + 16 + i * 16
+            const offset = this.gmeFileBuffer.readUInt32LE(segmentOffset)
+            const size = this.gmeFileBuffer.readUInt32LE(segmentOffset + 4)
+            const filename = this.gmeFileBuffer.slice(segmentOffset + 8, segmentOffset + 16).toString()
+            array.push({offset, size, filename})
+            console.log(`game number ${i} offset ${offset.toString(16)} size ${size} filename ${filename}`)
+        }
+        return array
     }
 
     /**
@@ -143,6 +175,7 @@ class GmeFile {
      * @param {Number} id 
      */
     changeProductId(id) {
+        this.productId = id
         this.gmeFileBuffer.writeUInt32LE(id, 0x14)
     }
 
