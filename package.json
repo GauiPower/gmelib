@@ -1,6 +1,6 @@
 {
   "name": "gmelib",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A nodejs library that help you change audio files in .gme files, without destroying the games.",
   "main": "lib.js",
   "scripts": {
@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/GauiPower/gmelib/issues"
   },
-  "homepage": "https://github.com/GauiPower/gmelib#readme"
+  "homepage": "https://github.com/GauiPower/gmelib#readme",
+  "devDependencies": {
+    "@types/node": "^22.7.4"
+  }
 }

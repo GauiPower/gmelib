@@ -70,11 +70,44 @@ class GmeFile {
             const offset = this.gmeFileBuffer.readUInt32LE(segmentOffset)
             const size = this.gmeFileBuffer.readUInt32LE(segmentOffset + 4)
             const filename = this.gmeFileBuffer.slice(segmentOffset + 8, segmentOffset + 16).toString()
-            array.push({offset, size, filename})
-            console.log(`game number ${i} offset ${offset.toString(16)} size ${size} filename ${filename}`)
+            array.push({ offset, size, filename })
         }
         return array
     }
+
+    /**
+     * 
+     */
+    writeBinaryTable(binaryTable, binaryTableOffset) {
+        const bin_count = this.gmeFileBuffer.readUInt32LE(binaryTableOffset)
+        for (let i = 0; bin_count > i; i++) {
+            const segmentOffset = binaryTableOffset + 16 + i * 16
+            this.gmeFileBuffer.writeUint32LE(binaryTable[i].offset, segmentOffset)
+            this.gmeFileBuffer.writeUint32LE(binaryTable[i].size, segmentOffset + 4)
+            const buff = Buffer.from(binaryTable[i].filename)
+            buff.copy(this.gmeFileBuffer, segmentOffset + 8, 0, 8)
+        }
+    }
+
+    /**
+     * 
+     * @param {Buffer} binaryBuffer 
+     * @param {Array} binaryTable 
+     * @param {Number} binaryTableOffset 
+     * @param {Number} binIndex 
+     * @returns {Array}
+     */
+    replaceBinary(binaryBuffer, binaryTable, binaryTableOffset, binIndex) {
+        if (binaryBuffer.length > binaryTable[binIndex].size) {
+            binaryTable[binIndex].offset = this.allocateSpace(binaryBuffer)
+        } else {
+            binaryBuffer.copy(this.gmeFileBuffer, binaryTable[binIndex].offset)
+        }
+        binaryTable[binIndex].size = binaryBuffer.length
+        this.writeBinaryTable(binaryTable, binaryTableOffset)
+        return binaryTable
+    }
+
 
     /**
      * 
@@ -115,16 +148,25 @@ class GmeFile {
     }
 
     /**
+     * @param {Buffer} buff
+     * @returns {number} offset
+     */
+    allocateSpace(buff) {
+        const offset = this.gmeFileBuffer.length - 4
+        const checksum = this.gmeFileBuffer.slice(this.gmeFileBuffer.length - 4, this.gmeFileBuffer.length) // TODO: public checksum
+        const newBufferArr = [this.gmeFileBuffer.slice(0, this.gmeFileBuffer.length - 4), buff, checksum]
+        this.gmeFileBuffer = Buffer.concat(newBufferArr)
+        return offset
+    }
+
+    /**
      * 
      * @param {Buffer} content 
      * @param {Number} id
      */
     addMediafile(content, id) {
         const encContent = this.crypt(content)
-        const mediaOffset = this.gmeFileBuffer.length - 4
-        const checksum = this.gmeFileBuffer.slice(this.gmeFileBuffer.length - 4, this.gmeFileBuffer.length) // TODO: public checksum
-        const newBufferArr = [this.gmeFileBuffer.slice(0, this.gmeFileBuffer.length - 4), encContent, checksum]
-        this.gmeFileBuffer = Buffer.concat(newBufferArr)
+        const mediaOffset = this.allocateSpace(encContent)
 
         this.mediaSegments[id].offset = mediaOffset
         this.mediaSegments[id].size = encContent.length
@@ -134,9 +176,9 @@ class GmeFile {
     /**
      * 
      * @param {Number} id 
-     * @returns 
+     * @returns {Buffer}
      */
-    extrFile(id) {
+    extractAudioFile(id) {
         const offset = this.mediaSegments[id].offset
         const size = this.mediaSegments[id].size
         const encContent = this.gmeFileBuffer.slice(offset, offset + size)
@@ -152,8 +194,8 @@ class GmeFile {
         }
 
         for (let i = 0; this.mediaSegments.length > i; i++) {
-            this.gmeFileBuffer.writeUInt32LE(this.mediaSegments[i].offset, this.mediaTableOffset + this.mediaTableSize + i * 8)
-            this.gmeFileBuffer.writeUInt32LE(this.mediaSegments[i].size, this.mediaTableOffset + this.mediaTableSize + i * 8 + 4)
+            this.gmeFileBuffer.writeUInt32LE(this.mediaSegments[i].offset, this.copyMediaTableOffset + i * 8)
+            this.gmeFileBuffer.writeUInt32LE(this.mediaSegments[i].size, this.copyMediaTableOffset + i * 8 + 4)
         }
     }
 
