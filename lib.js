@@ -15,22 +15,34 @@ class GmeFile {
 
 
         this.game1binariesTableOffset = this.gmeFileBuffer.readUInt32LE(0x90)
-        this.game1binariesTable = this.parseBinaryTable(this.game1binariesTableOffset)
+        if (this.game1binariesTableOffset !== 0) {
+            this.game1binariesTable = this.parseBinaryTable(this.game1binariesTableOffset)
+        }
 
         this.game2NbinariesTableOffset = this.gmeFileBuffer.readUInt32LE(0x98)
-        this.game2NbinariesTable = this.parseBinaryTable(this.game2NbinariesTableOffset)
+        if (this.game2NbinariesTableOffset !== 0) {
+            this.game2NbinariesTable = this.parseBinaryTable(this.game2NbinariesTableOffset)
+        }
 
         this.main1binaryTableOffset = this.gmeFileBuffer.readUInt32LE(0xA0)
-        this.main1binaryTable = this.parseBinaryTable(this.main1binaryTableOffset)
+        if (this.main1binaryTableOffset !== 0) {
+            this.main1binaryTable = this.parseBinaryTable(this.main1binaryTableOffset)
+        }
 
         this.main2NbinaryTableOffset = this.gmeFileBuffer.readUInt32LE(0xA8)
-        this.main2NbinaryTable = this.parseBinaryTable(this.main2NbinaryTableOffset)
+        if (this.main2NbinaryTableOffset !== 0) {
+            this.main2NbinaryTable = this.parseBinaryTable(this.main2NbinaryTableOffset)
+        }
 
         this.main3LbinaryTableOffset = this.gmeFileBuffer.readUInt32LE(0xC8)
-        this.main3LbinaryTable = this.parseBinaryTable(this.main3LbinaryTableOffset)
+        if (this.main3LbinaryTableOffset !== 0) {
+            this.main3LbinaryTable = this.parseBinaryTable(this.main3LbinaryTableOffset)
+        }
 
         this.game3LbinariesTableOffset = this.gmeFileBuffer.readUInt32LE(0xCC)
-        this.game3LbinariesTable = this.parseBinaryTable(this.game3LbinariesTableOffset)
+        if (this.game3LbinariesTableOffset !== 0) {
+            this.game3LbinariesTable = this.parseBinaryTable(this.game3LbinariesTableOffset)
+        }
 
 
         if (this.copyMediaTableOffset === 0) {
