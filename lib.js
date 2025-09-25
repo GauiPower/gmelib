@@ -15,31 +15,37 @@ class GmeFile {
 
 
         this.game1binariesTableOffset = this.gmeFileBuffer.readUInt32LE(0x90)
+        this.game1binariesTable = []
         if (this.game1binariesTableOffset !== 0) {
             this.game1binariesTable = this.parseBinaryTable(this.game1binariesTableOffset)
         }
 
         this.game2NbinariesTableOffset = this.gmeFileBuffer.readUInt32LE(0x98)
+        this.game2NbinariesTable = []
         if (this.game2NbinariesTableOffset !== 0) {
             this.game2NbinariesTable = this.parseBinaryTable(this.game2NbinariesTableOffset)
         }
 
         this.main1binaryTableOffset = this.gmeFileBuffer.readUInt32LE(0xA0)
+        this.main1binaryTable = []
         if (this.main1binaryTableOffset !== 0) {
             this.main1binaryTable = this.parseBinaryTable(this.main1binaryTableOffset)
         }
 
         this.main2NbinaryTableOffset = this.gmeFileBuffer.readUInt32LE(0xA8)
+        this.main2NbinaryTable = []
         if (this.main2NbinaryTableOffset !== 0) {
             this.main2NbinaryTable = this.parseBinaryTable(this.main2NbinaryTableOffset)
         }
 
         this.main3LbinaryTableOffset = this.gmeFileBuffer.readUInt32LE(0xC8)
+        this.main3LbinaryTable = []
         if (this.main3LbinaryTableOffset !== 0) {
             this.main3LbinaryTable = this.parseBinaryTable(this.main3LbinaryTableOffset)
         }
 
         this.game3LbinariesTableOffset = this.gmeFileBuffer.readUInt32LE(0xCC)
+        this.game3LbinariesTable = []
         if (this.game3LbinariesTableOffset !== 0) {
             this.game3LbinariesTable = this.parseBinaryTable(this.game3LbinariesTableOffset)
         }
@@ -69,6 +75,87 @@ class GmeFile {
         }
     }
 
+
+    parseScriptTable() {
+        const lastusedOid = this.gmeFileBuffer.readUInt32LE(this.playScriptTableOffset)
+        const firstusedOid = this.gmeFileBuffer.readUInt32LE(this.playScriptTableOffset + 4)
+        const arr = []
+        for (let i = 0; i < lastusedOid - firstusedOid; i++) {
+            const obj = {}
+            const scriptAdress = this.gmeFileBuffer.readUInt32LE(this.playScriptTableOffset + 8 + 4 * i)
+            if (scriptAdress == 0xffffffff) {
+                continue
+            }
+            obj[i+firstusedOid] = this.parseScript(scriptAdress)
+            arr.push(obj)
+            // parse each script
+        }
+        return arr
+    }
+
+    parseScript(offset) {
+        const len = this.gmeFileBuffer.readUInt16LE(offset)
+        const arr = []
+        for (let i = 0; i < len; i++) {
+            arr.push(this.parseScriptLine(this.gmeFileBuffer.readUInt32LE(offset + 2 + 4 * i)))
+            // parse each line
+        }
+        return arr
+    }
+
+    parseScriptLine(offset) {
+        const conLen = this.gmeFileBuffer.readUInt16LE(offset) // todo check if 16 or 32
+        const actLen = this.gmeFileBuffer.readUInt16LE(offset + 2 + 8 * conLen)
+        const playlistOffset = this.gmeFileBuffer.readUInt32LE(offset + 2 + 8 * conLen + 2 + 7 * actLen)
+        return {conLen, actLen, playlistOffset}
+    }
+
+    decodeCommand(command) {
+        switch (command) {
+            case 0xFFF0:
+                return "+=";
+            case 0xFFF1:
+                return "-=";
+            case 0xFFF2:
+                return "*=";
+            case 0xFFF3:
+                return "%=";
+            case 0xFFF4:
+                return "/=";
+            case 0xFFF5:
+                return "&=";
+            case 0xFFF6:
+                return "|=";
+            case 0xFFF7:
+                return "^=";
+            case 0xFFF8:
+                return "Neg($r)";
+            case 0xFFF9:
+                return ":=";
+            case 0xFFE0:
+                return "P*";
+            case 0xFFE1:
+                return "PA*";
+            case 0xFFE8:
+                return "P(m)";
+            case 0xFB00:
+                return "PA(b-a)";
+            case 0xFC00:
+                return "P(b-a)";
+            case 0xFD00:
+                return "G(m)";
+            case 0xF8FF:
+                return "J(m)";
+            case 0xFAFF:
+                return "C";
+            case 0xFF00:
+                return "T($r, m)";
+            default:
+                return "Unknown operation";
+        }
+
+    }
+
     /**
      * 
      * @param {Number} binaryTableOffset 
@@ -82,7 +169,7 @@ class GmeFile {
             const offset = this.gmeFileBuffer.readUInt32LE(segmentOffset)
             const size = this.gmeFileBuffer.readUInt32LE(segmentOffset + 4)
             const filename = this.gmeFileBuffer.slice(segmentOffset + 8, segmentOffset + 16).toString()
-            array.push({ offset, size, filename })
+            array.push({ offset, size, filename, index: i })
         }
         return array
     }

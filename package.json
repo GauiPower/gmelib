@@ -1,6 +1,6 @@
 {
   "name": "gmelib",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "A Node.js library that allows you to modify audio and binary files within .gme files while preserving the integrity of other components.",
   "main": "lib.js",
   "scripts": {
